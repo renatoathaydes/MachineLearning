@@ -1,4 +1,4 @@
-package main.groovy.com.athaydes.algorithms
+package com.athaydes.algorithms
 
 /**
  *

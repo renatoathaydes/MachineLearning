@@ -1,8 +1,8 @@
-package test.groovy.com.athaydes.algorithms
+package com.athaydes.algorithms
 
-import main.groovy.com.athaydes.algorithms.KMeans
-import main.groovy.com.athaydes.algorithms.KMeans.Cluster
-import main.groovy.com.athaydes.algorithms.Sample
+import com.athaydes.algorithms.KMeans
+import com.athaydes.algorithms.KMeans.Cluster
+import com.athaydes.algorithms.Sample
 import org.junit.Test
 
 /**
