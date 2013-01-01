@@ -96,7 +96,7 @@ class KMeans {
 
 		Cluster leftShift( Sample sample ) {
 			store.add( id, sample )
-			mean = store.avg( id )
+			mean = store.helper.avg( store, id )
 			sampleCount++
 			return this
 		}
@@ -106,7 +106,7 @@ class KMeans {
 			--sampleCount
 			if (sampleCount > 0) {
 				store.getSamples( id ).remove( sample )
-				mean = store.avg( id )
+				mean = store.helper.avg( store, id )
 			} else {
 				mean = null
 				store.remove( id )
@@ -136,7 +136,14 @@ interface ClusterStore {
 	void add( name, Sample sample )
 	void remove( name )
 	List<Sample> getSamples( name )
-	BigDecimal avg( name )
+	final static Helper helper = new Helper()
+
+	static class Helper {
+		static BigDecimal avg( ClusterStore store, name ) {
+			def values = store.getSamples( name )*.value
+			return values.sum() / values.size()
+		}
+	}
 }
 
 class MemoryClusterStore implements ClusterStore {
@@ -149,11 +156,6 @@ class MemoryClusterStore implements ClusterStore {
 
 	List<Sample> getSamples( name ) {
 		map.get(name, [])
-	}
-
-	BigDecimal avg( name ) {
-		def values = getSamples( name )*.value
-		return values.sum() / values.size()
 	}
 
 	void remove( name ) {
