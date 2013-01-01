@@ -68,8 +68,8 @@ class KMeans {
 		}
 	}
 
-	private boolean reassessClusterSamples( Cluster cluster, List<Sample> samples ) {
-		for ( sample in samples ) {
+	private boolean reassessClusterSamples( Cluster cluster, List samples ) {
+		for ( Sample sample in samples ) {
 			Cluster nearest = nearestCluster( sample.value )
 			if ( cluster != nearest && nearest.mean != null ) {
 				println "Looks like sample $sample.value is in cluster with mean $cluster.mean should be in cluster with mean $nearest.mean"
@@ -101,7 +101,7 @@ class KMeans {
 			return this
 		}
 
-		Cluster minus( sample ) {
+		Cluster minus( Sample sample ) {
 			println ( "Removing $sample.value from cluster $id")
 			--sampleCount
 			if (sampleCount > 0) {
@@ -121,21 +121,26 @@ class KMeans {
 
 }
 
-class Sample {
+interface Sample {
 	final BigDecimal value
-	Sample(value) {
+}
+
+class SimpleSample implements Sample {
+	final BigDecimal value
+
+	SimpleSample(value) {
 		this.value = value
 	}
 
 	String toString( ) {
-		"[Sample: $value]"
+		"[SimpleSample: $value]"
 	}
 }
 
 interface ClusterStore {
-	void add( name, Sample sample )
+	void add( name, sample )
 	void remove( name )
-	List<Sample> getSamples( name )
+	List getSamples( name )
 	final static Helper helper = new Helper()
 
 	static class Helper {
@@ -150,11 +155,11 @@ class MemoryClusterStore implements ClusterStore {
 
 	final map = [:]
 
-	void add( name, Sample sample ) {
+	void add( name, sample ) {
 		map.get(name, []) << sample
 	}
 
-	List<Sample> getSamples( name ) {
+	List getSamples( name ) {
 		map.get(name, [])
 	}
 

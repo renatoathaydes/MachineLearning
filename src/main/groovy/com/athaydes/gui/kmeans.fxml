@@ -7,17 +7,19 @@
 <?import javafx.scene.text.*?>
 
 
-<FlowPane fx:controller="com.athaydes.gui.KMeansGUIController"
+<VBox fx:controller="com.athaydes.gui.KMeansGUIController"
           stylesheets="com/athaydes/gui/kmeans.css"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
+          xmlns:fx="http://javafx.com/fxml" alignment="center" spacing="10">
 	<padding><Insets top="25" right="25" bottom="10" left="25"/></padding>
 	<Text styleClass="title" text="K-Means Visual Test Tool" />
 	<Text text="Click on the area below to create data points" />
 
 	<ToolBar>
-		<Text text="Select color:" />
-		<ColorPicker fx:id="colorPicker" onAction="#onColorChange" />
+		<Text text="Select the number of clusters:" />
+		<ChoiceBox fx:id="clustersPicker" />
+		<Text text="Select the cluster's colors:" />
+		<VBox fx:id="clusterColorsGroup" spacing="5" />
 	</ToolBar>
 
 	<Group fx:id="kMeansCanvas" onMouseClicked="#onClickCanvas" />
-</FlowPane>
+</VBox>
