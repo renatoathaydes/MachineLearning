@@ -1,1 +1,9 @@
-This file was created by IntelliJ IDEA 12.0.1 for binding GitHub repository
+This project includes the implementation os Machine Learning / Data Mining algorithms.
+
+The GUI package contains user interfaces which allow the visualization of the algorithms.
+
+The algorithms are written in the Groovy programming language.
+The user interfaces, in JavaFX2.
+
+Author: Paulo Renato de Athaydes
+Email: renato@athaydes.com

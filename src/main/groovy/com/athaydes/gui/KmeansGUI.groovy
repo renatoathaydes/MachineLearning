@@ -22,8 +22,6 @@ import javafx.scene.paint.Paint
 import javafx.scene.shape.Rectangle
 import javafx.stage.Stage
 
-import javafx.geometry.Dimension2D
-
 class KMeansGUI extends Application {
 
 	def WIDTH = 500
