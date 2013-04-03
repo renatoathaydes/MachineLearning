@@ -16,9 +16,9 @@ class KMeans {
 
 	private String generateClusterId( ) {
 		String id
-		while (true) {
+		while ( true ) {
 			id = UUID.randomUUID().toString()
-			if (!(clusters*.id).contains(id)) break;
+			if ( !( clusters*.id ).contains( id ) ) break;
 		}
 		return id
 	}
@@ -40,35 +40,35 @@ class KMeans {
 	}
 
 	private Cluster nearestCluster( BigDecimal value ) {
-		def spotOnClusters = clusters.grep{ it.mean == value }
-		if (spotOnClusters) {
-			return spotOnClusters[0]
+		def spotOnClusters = clusters.grep { it.mean == value }
+		if ( spotOnClusters ) {
+			return spotOnClusters[ 0 ]
 		}
-		def nullMeanClusters = clusters.grep{ it.mean == null }
-		if (nullMeanClusters) {
-			return nullMeanClusters[0]
+		def nullMeanClusters = clusters.grep { it.mean == null }
+		if ( nullMeanClusters ) {
+			return nullMeanClusters[ 0 ]
 		}
-		return clusters.sort {
+		return clusters.min {
 			c1, c2 ->
 				distance( c1, value ) - distance( c2, value ) as int
-		}[0]
+		}
 	}
 
-	private void reclassifyAfterChanging() {
+	private void reclassifyAfterChanging( ) {
 		def needReclassify = false
-		for (cluster in clusters) {
+		for ( cluster in clusters ) {
 			def samples = store.getSamples( cluster.id )
 			needReclassify = reassessClusterSamples( cluster, samples )
-			if (needReclassify) break;
+			if ( needReclassify ) break;
 		}
-		if (needReclassify) {
-			println ( clusters )
-			println ( "Store: " + store.map )
+		if ( needReclassify ) {
+			println( clusters )
+			println( "Store: " + store.map )
 			reclassifyAfterChanging()
 		}
 	}
 
-	private boolean reassessClusterSamples( Cluster cluster, List samples ) {
+	private boolean reassessClusterSamples( Cluster cluster, List<Sample> samples ) {
 		for ( Sample sample in samples ) {
 			Cluster nearest = nearestCluster( sample.value )
 			if ( cluster != nearest && nearest.mean != null ) {
@@ -80,9 +80,8 @@ class KMeans {
 		return false
 	}
 
-	private static distance( Cluster cluster, BigDecimal value) {
-		if (cluster.mean) Math.abs( cluster.mean - value )
-		else 0.0
+	private static distance( Cluster cluster, BigDecimal value ) {
+		cluster.mean ? Math.abs( cluster.mean - value ) : 0.0
 	}
 
 	class Cluster {
@@ -90,7 +89,7 @@ class KMeans {
 		BigDecimal mean
 		long sampleCount
 
-		Cluster(String id) {
+		Cluster( String id ) {
 			this.id = id
 		}
 
@@ -102,9 +101,9 @@ class KMeans {
 		}
 
 		Cluster minus( Sample sample ) {
-			println ( "Removing $sample.value from cluster $id")
+			println( "Removing $sample.value from cluster $id" )
 			--sampleCount
-			if (sampleCount > 0) {
+			if ( sampleCount > 0 ) {
 				store.getSamples( id ).remove( sample )
 				mean = store.helper.avg( store, id )
 			} else {
@@ -128,7 +127,7 @@ interface Sample {
 class SimpleSample implements Sample {
 	final BigDecimal value
 
-	SimpleSample(value) {
+	SimpleSample( value ) {
 		this.value = value
 	}
 
@@ -139,8 +138,11 @@ class SimpleSample implements Sample {
 
 interface ClusterStore {
 	void add( name, sample )
+
 	void remove( name )
+
 	List getSamples( name )
+
 	final static Helper helper = new Helper()
 
 	static class Helper {
@@ -153,14 +155,14 @@ interface ClusterStore {
 
 class MemoryClusterStore implements ClusterStore {
 
-	final map = [:]
+	final map = [ : ]
 
 	void add( name, sample ) {
-		map.get(name, []) << sample
+		map.get( name, [ ] ) << sample
 	}
 
 	List getSamples( name ) {
-		map.get(name, [])
+		map.get( name, [ ] )
 	}
 
 	void remove( name ) {

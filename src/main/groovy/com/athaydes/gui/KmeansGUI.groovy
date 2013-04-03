@@ -46,12 +46,13 @@ class KMeansGUIController {
 	protected final ChoiceBox<Integer> clustersPicker
 
 	List<Color> clusterColors = [ ]
-	def WIDTH = 300
-	def HEIGHT = 300
+	final WIDTH = 300
+	final HEIGHT = 300
 
 	KMeans kMeans
 	def clusterIndexById = [ : ]
 
+	@FXML
 	void initialize( ) {
 		initBackground()
 		initClusterPicker()
@@ -75,7 +76,7 @@ class KMeansGUIController {
 	}
 
 	private void onClusterCountChange( Integer oldVal, Integer newVal ) {
-		if ( !oldVal ) oldVal = 0
+		oldVal = oldVal?: 0
 		if ( oldVal > newVal ) {
 			( oldVal - newVal ).times {
 				clusterColorsGroup.children.remove( clusterColorsGroup.children.size() - 1 )
@@ -107,9 +108,7 @@ class KMeansGUIController {
 			}
 		}
 
-		for ( Sample sample in allSamples ) {
-			kMeans.classify( sample )
-		}
+		allSamples.each { kMeans.classify( it ) }
 
 	}
 
@@ -171,4 +170,4 @@ class GuiSample extends Rectangle implements Sample {
 	}
 }
 
-Application.launch( KMeansGUI.class )
+Application.launch KMeansGUI
