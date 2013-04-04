@@ -33,6 +33,11 @@ class KMeans {
 		return cluster
 	}
 
+	void classifyAll( Iterable<Sample> samples ) {
+		samples.each { sample -> nearestCluster( sample.value ) << sample }
+		reclassifyAfterChanging()
+	}
+
 	private Cluster nearestCluster( BigDecimal value ) {
 		def spotOnClusters = clusters.grep { it.mean == value }
 		if ( spotOnClusters ) {

@@ -76,7 +76,7 @@ class KMeansGUIController {
 	}
 
 	private void onClusterCountChange( Integer oldVal, Integer newVal ) {
-		oldVal = oldVal?: 0
+		oldVal = oldVal ?: 0
 		if ( oldVal > newVal ) {
 			( oldVal - newVal ).times {
 				clusterColorsGroup.children.remove( clusterColorsGroup.children.size() - 1 )
@@ -108,7 +108,7 @@ class KMeansGUIController {
 			}
 		}
 
-		allSamples.each { kMeans.classify( it ) }
+		kMeans.classifyAll( allSamples )
 
 	}
 
