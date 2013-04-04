@@ -24,8 +24,8 @@ import javafx.stage.Stage
 
 class KMeansGUI extends Application {
 
-	def WIDTH = 500
-	def HEIGHT = 500
+	final WIDTH = 500
+	final HEIGHT = 500
 
 	@Override
 	public void start( Stage stage ) throws Exception {

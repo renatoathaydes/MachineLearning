@@ -15,12 +15,8 @@ class KMeans {
 	}
 
 	private String generateClusterId( ) {
-		String id
-		while ( true ) {
-			id = UUID.randomUUID().toString()
-			if ( !( clusters*.id ).contains( id ) ) break;
-		}
-		return id
+		String id = UUID.randomUUID().toString()
+		( clusters*.id ).contains( id ) ? generateClusterId() : id
 	}
 
 	/**
@@ -33,8 +29,6 @@ class KMeans {
 	def Cluster classify( Sample sample ) {
 		Cluster cluster = nearestCluster( sample.value )
 		cluster << sample
-
-		println "Sample.value=$sample.value, " + clusters
 		reclassifyAfterChanging()
 		return cluster
 	}
