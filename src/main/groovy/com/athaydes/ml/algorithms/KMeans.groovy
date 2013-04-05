@@ -1,4 +1,4 @@
-package com.athaydes.algorithms
+package com.athaydes.ml.algorithms
 
 /**
  *

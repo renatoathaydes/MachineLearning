@@ -7,8 +7,8 @@
 <?import javafx.scene.text.*?>
 
 
-<VBox fx:controller="com.athaydes.gui.KMeansGUIController"
-          stylesheets="com/athaydes/gui/kmeans.css"
+<VBox fx:controller="com.athaydes.ml.gui.KMeansGUIController"
+          stylesheets="com/athaydes/ml/gui/kmeans.css"
           xmlns:fx="http://javafx.com/fxml" alignment="center" spacing="10">
 	<padding><Insets top="25" right="25" bottom="10" left="25"/></padding>
 	<Text styleClass="title" text="K-Means Visual Test Tool" />

@@ -1,8 +1,8 @@
-package com.athaydes.gui
+package com.athaydes.ml.gui
 
-import com.athaydes.algorithms.KMeans
-import com.athaydes.algorithms.MemoryClusterStore
-import com.athaydes.algorithms.Sample
+import com.athaydes.ml.algorithms.KMeans
+import com.athaydes.ml.algorithms.MemoryClusterStore
+import com.athaydes.ml.algorithms.Sample
 import javafx.application.Application
 import javafx.beans.value.ChangeListener
 import javafx.event.EventHandler
@@ -33,6 +33,10 @@ class KMeansGUI extends Application {
 		stage.title = "K-Means Visual Test"
 		stage.scene = new Scene( root, WIDTH, HEIGHT )
 		stage.show()
+	}
+
+	static void main( args ) {
+		Application.launch KMeansGUI
 	}
 
 }
@@ -169,5 +173,3 @@ class GuiSample extends Rectangle implements Sample {
 		value = x ** 2 + y ** 2
 	}
 }
-
-Application.launch KMeansGUI

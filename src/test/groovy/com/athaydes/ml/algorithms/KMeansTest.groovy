@@ -1,6 +1,6 @@
-package com.athaydes.algorithms
+package com.athaydes.ml.algorithms
 
-import com.athaydes.algorithms.KMeans.Cluster
+import com.athaydes.ml.algorithms.KMeans.Cluster
 import org.junit.Test
 
 /**
