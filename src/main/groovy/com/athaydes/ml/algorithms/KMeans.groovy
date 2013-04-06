@@ -8,6 +8,7 @@ class KMeans {
 	private final int k
 	final List<Cluster> clusters = [ ]
 	ClusterStore store = new MemoryClusterStore()
+	def enableLog = false
 
 	KMeans( int k ) {
 		this.k = k
@@ -61,8 +62,10 @@ class KMeans {
 			if ( needReclassify ) break;
 		}
 		if ( needReclassify ) {
-			println( clusters )
-			println( "Store: " + store.map )
+			if ( enableLog ) {
+				println( clusters )
+				println( "Store: " + store.map )
+			}
 			reclassifyAfterChanging()
 		}
 	}
@@ -71,7 +74,9 @@ class KMeans {
 		for ( Sample sample in samples ) {
 			Cluster nearest = nearestCluster( sample.value )
 			if ( cluster != nearest && nearest.mean != null ) {
-				println "Looks like sample $sample.value is in cluster with mean $cluster.mean should be in cluster with mean $nearest.mean"
+				if (enableLog)
+					println "Looks like sample $sample.value is in cluster with mean $cluster.mean" +
+							" should be in cluster with mean $nearest.mean"
 				cluster - sample; nearest << sample
 				return true
 			}
@@ -100,7 +105,8 @@ class KMeans {
 		}
 
 		Cluster minus( Sample sample ) {
-			println( "Removing $sample.value from cluster $id" )
+			if (enableLog)
+				println( "Removing $sample.value from cluster $id" )
 			--sampleCount
 			if ( sampleCount > 0 ) {
 				store.getSamples( id ).remove( sample )

@@ -47,8 +47,8 @@ class KMeansTest {
 
 		def rand = new Random()
 		def items = ( 50..100 ).collect { new SimpleSample( it * rand.nextInt( 10000 ) ) }
-		items.each { oneByOneAlgorithm.classify( it ) }
-		batchAlgorithm.classifyAll( items )
+		items.each { oneByOneAlgorithm.classify it }
+		batchAlgorithm.classifyAll items
 
 		def oneByOneValues = [ ]
 		oneByOneAlgorithm.clusters.each {
