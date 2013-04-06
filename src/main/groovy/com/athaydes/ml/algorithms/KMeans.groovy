@@ -53,13 +53,12 @@ class KMeans {
 			if ( c.mean == value ) return c
 			else if ( c.mean == null ) return c
 			double d
-			if ( ( d = distance( c, value ) as double ) < minDist ) {
+			if ( ( d = distance( c, value ) ) < minDist ) {
 				min = c
 				minDist = d
 			}
 		}
 		return min
-
 	}
 
 	@CompileStatic
