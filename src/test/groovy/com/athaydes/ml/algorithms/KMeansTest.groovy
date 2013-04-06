@@ -157,7 +157,6 @@ class KMeansTest {
 
 		List sampleValues = ( ( 1..10 ) + ( 91..100 ) ) as List
 		Collections.shuffle( sampleValues )
-		println sampleValues
 
 		sampleValues.each { algorithm.classify( new SimpleSample( it ) ) }
 		def clusters = algorithm.clusters
@@ -165,6 +164,48 @@ class KMeansTest {
 		def means = clusters*.mean
 		assert means.contains( ( 1..10 ).sum() / 10 )
 		assert means.contains( ( 91..100 ).sum() / 10 )
+	}
+
+	@Test
+	void performanceTest( ) {
+		def getSamples = { order ->
+			List sampleValues = ( ( 1..( 1 * order ) ) +
+					( ( 2 * order + 1 )..( 3 * order ) ) +
+					( ( 4 * order + 1 )..( 5 * order ) ) ) as List
+
+			Collections.shuffle( sampleValues )
+			sampleValues.collect { new SimpleSample( it ) }
+		}
+
+		def sizes = [ 2000, 1500, 1000, 500 ]
+		def times = ( 1..5 ).collect {
+			sizes.collect { order ->
+				def samples = getSamples( order )
+				def algorithm = new KMeans( 3 )
+				runWithTimer {
+					algorithm.classifyAll( samples )
+				}
+			}
+		}
+
+		def timesBySize = [ : ]
+		println "${'Cluster size'.center( 20 )} | ${'Time taken (ms)'.center( 20 ) }"
+		times.each { t ->
+			sizes.eachWithIndex { s, i ->
+				timesBySize.get( s, [ ] ) << t[ i ]
+				println "${( s as String ).center( 20 )} | ${( t[ i ] as String ).center( 20 )}"
+			}
+		}
+		timesBySize.each { s, ts ->
+			println "Avg time for size $s: ${ts.sum() / ts.size()}"
+		}
+
+	}
+
+	def runWithTimer( Closure cls ) {
+		def startT = System.currentTimeMillis()
+		cls()
+		System.currentTimeMillis() - startT
 	}
 
 }

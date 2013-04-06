@@ -49,8 +49,7 @@ class KMeans {
 			return nullMeanClusters[ 0 ]
 		}
 		return clusters.min {
-			c1, c2 ->
-				distance( c1, value ) - distance( c2, value ) as int
+			c1, c2 -> distance( c1, value ) - distance( c2, value ) as int
 		}
 	}
 
@@ -64,7 +63,6 @@ class KMeans {
 		if ( needReclassify ) {
 			if ( enableLog ) {
 				println( clusters )
-				println( "Store: " + store.map )
 			}
 			reclassifyAfterChanging()
 		}
@@ -74,7 +72,7 @@ class KMeans {
 		for ( Sample sample in samples ) {
 			Cluster nearest = nearestCluster( sample.value )
 			if ( cluster != nearest && nearest.mean != null ) {
-				if (enableLog)
+				if ( enableLog )
 					println "Looks like sample $sample.value is in cluster with mean $cluster.mean" +
 							" should be in cluster with mean $nearest.mean"
 				cluster - sample; nearest << sample
@@ -105,7 +103,7 @@ class KMeans {
 		}
 
 		Cluster minus( Sample sample ) {
-			if (enableLog)
+			if ( enableLog )
 				println( "Removing $sample.value from cluster $id" )
 			--sampleCount
 			if ( sampleCount > 0 ) {
