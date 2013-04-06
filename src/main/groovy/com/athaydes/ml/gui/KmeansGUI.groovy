@@ -129,7 +129,7 @@ class KMeansPanel extends VBox {
 		kMeans.store = new MemoryClusterStore() {
 
 			@Override
-			void add( name, sample ) {
+			void add( String name, Sample sample ) {
 				super.add( name, sample )
 				def index = clusterIndexById.get( name, clusterIndexById.size() )
 				sample.fill = clusterColors[ index ]

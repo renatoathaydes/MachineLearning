@@ -169,7 +169,7 @@ class KMeansTest {
 	@Test
 	void performanceTest( ) {
 		def getSamples = { order ->
-			List sampleValues = ( ( 1..( 1 * order ) ) +
+			def sampleValues = ( ( 1..( 1 * order ) ) +
 					( ( 2 * order + 1 )..( 3 * order ) ) +
 					( ( 4 * order + 1 )..( 5 * order ) ) ) as List
 

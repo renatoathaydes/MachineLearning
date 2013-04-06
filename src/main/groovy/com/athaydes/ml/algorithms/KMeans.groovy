@@ -1,5 +1,7 @@
 package com.athaydes.ml.algorithms
 
+import groovy.transform.CompileStatic
+
 /**
  *
  * User: Renato
@@ -34,25 +36,33 @@ class KMeans {
 		return cluster
 	}
 
-	void classifyAll( Iterable<Sample> samples ) {
-		samples.each { sample -> nearestCluster( sample.value ) << sample }
+	@CompileStatic
+	void classifyAll( Collection<Sample> samples ) {
+		for ( Sample sample in samples ) {
+			nearestCluster( sample.value ).leftShift( sample )
+		}
+		//samples.each { sample -> nearestCluster( sample.value ) << sample }
 		reclassifyAfterChanging()
 	}
 
+	@CompileStatic
 	private Cluster nearestCluster( BigDecimal value ) {
-		def spotOnClusters = clusters.grep { it.mean == value }
-		if ( spotOnClusters ) {
-			return spotOnClusters[ 0 ]
+		Cluster min = null
+		double minDist = Double.MAX_VALUE
+		for ( Cluster c in clusters ) {
+			if ( c.mean == value ) return c
+			else if ( c.mean == null ) return c
+			double d
+			if ( ( d = distance( c, value ) as double ) < minDist ) {
+				min = c
+				minDist = d
+			}
 		}
-		def nullMeanClusters = clusters.grep { it.mean == null }
-		if ( nullMeanClusters ) {
-			return nullMeanClusters[ 0 ]
-		}
-		return clusters.min {
-			c1, c2 -> distance( c1, value ) - distance( c2, value ) as int
-		}
+		return min
+
 	}
 
+	@CompileStatic
 	private void reclassifyAfterChanging( ) {
 		def needReclassify = false
 		for ( cluster in clusters ) {
@@ -68,24 +78,29 @@ class KMeans {
 		}
 	}
 
-	private boolean reassessClusterSamples( Cluster cluster, List<Sample> samples ) {
-		for ( Sample sample in samples ) {
+	@CompileStatic
+	private boolean reassessClusterSamples( Cluster cluster, List<? extends Sample> samples ) {
+		for ( sample in samples ) {
+			if ( sample.value == null ) throw new RuntimeException( ' sample value was null' )
 			Cluster nearest = nearestCluster( sample.value )
 			if ( cluster != nearest && nearest.mean != null ) {
 				if ( enableLog )
 					println "Looks like sample $sample.value is in cluster with mean $cluster.mean" +
 							" should be in cluster with mean $nearest.mean"
-				cluster - sample; nearest << sample
+				cluster.minus sample
+				nearest.leftShift sample
 				return true
 			}
 		}
 		return false
 	}
 
-	private static distance( Cluster cluster, BigDecimal value ) {
-		cluster.mean ? Math.abs( cluster.mean - value ) : 0.0
+	@CompileStatic
+	private static double distance( Cluster cluster, BigDecimal value ) {
+		if ( cluster.mean == null ) 0.0 else Math.abs( cluster.mean.minus( value ).doubleValue() )
 	}
 
+	@CompileStatic
 	class Cluster {
 		final String id
 		BigDecimal mean
@@ -124,13 +139,14 @@ class KMeans {
 }
 
 interface Sample {
-	final BigDecimal value
+	BigDecimal getValue( )
 }
 
+@CompileStatic
 class SimpleSample implements Sample {
 	final BigDecimal value
 
-	SimpleSample( value ) {
+	SimpleSample( BigDecimal value ) {
 		this.value = value
 	}
 
@@ -139,36 +155,49 @@ class SimpleSample implements Sample {
 	}
 }
 
+@CompileStatic
 interface ClusterStore {
-	void add( name, sample )
+	void add( String name, Sample sample )
 
-	void remove( name )
+	void remove( String name )
 
-	List getSamples( name )
+	List<? extends Sample> getSamples( String name )
 
 	final static Helper helper = new Helper()
 
 	static class Helper {
-		static BigDecimal avg( ClusterStore store, name ) {
-			def values = store.getSamples( name )*.value
-			return values.sum() / values.size()
+		static BigDecimal avg( ClusterStore store, String name ) {
+			double total = 0.0
+			List<? extends Sample> samples = store.getSamples( name )
+			for ( Sample s in samples ) {
+				total += s.value.doubleValue()
+			}
+			return new BigDecimal( total / samples.size() )
 		}
 	}
 }
 
+@CompileStatic
 class MemoryClusterStore implements ClusterStore {
 
-	final map = [ : ]
+	final Map<String, List<Sample>> map = [ : ]
 
-	void add( name, sample ) {
-		map.get( name, [ ] ) << sample
+	void add( String name, Sample sample ) {
+		List<? extends Sample> res = map[ name ]
+		if ( !res )
+			map[ name ] = res = [ ]
+		res.add sample
+
 	}
 
-	List getSamples( name ) {
-		map.get( name, [ ] )
+	List<? extends Sample> getSamples( String name ) {
+		List<? extends Sample> res = map[ name ]
+		if ( !res )
+			map[ name ] = res = [ ]
+		res
 	}
 
-	void remove( name ) {
+	void remove( String name ) {
 		map.remove( name )
 	}
 }
