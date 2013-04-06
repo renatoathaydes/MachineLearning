@@ -40,16 +40,15 @@ class KMeans {
 	}
 
 	private Cluster nearestCluster( BigDecimal value ) {
-		def spotOnClusters = clusters.grep { it.mean == value }
-		if ( spotOnClusters ) {
-			return spotOnClusters[ 0 ]
-		}
-		def nullMeanClusters = clusters.grep { it.mean == null }
-		if ( nullMeanClusters ) {
-			return nullMeanClusters[ 0 ]
-		}
-		return clusters.min {
-			c1, c2 -> distance( c1, value ) - distance( c2, value ) as int
+		def spotOnCluster = clusters.find { it.mean == value }
+		if ( spotOnCluster ) return spotOnCluster
+
+		def nullMeanCluster = clusters.find { it.mean == null }
+		if ( nullMeanCluster ) return nullMeanCluster
+
+		return clusters.min { c1, c2 ->
+			def res = distance( c1, value ) - distance( c2, value )
+			res == 0 ? 0 : res > 0 ? 1 : -1
 		}
 	}
 
