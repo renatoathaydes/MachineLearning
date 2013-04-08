@@ -11,11 +11,9 @@ class LinearGP {
 
 	Object[] args
 	def expected
-	final algorithm = new GPAlgorithm()
-
-	List<Program> programs
-
-	static LinearGP get( ) { new LinearGP() }
+	def populationSize = 20
+	def maxProgramSize = 10
+	final List<Program> programs = [ ]
 
 	def withInputs( Object... args ) {
 		this.args = args
@@ -44,7 +42,7 @@ class LinearGP {
 
 	private void init( ) {
 		if ( !programs ) {
-			programs = algorithm.evolve( this )
+			programs.addAll GPAlgorithm.evolve( this )
 		}
 		programs
 	}
@@ -54,37 +52,54 @@ class LinearGP {
 class GPAlgorithm {
 
 	static final Random rand = new Random( System.currentTimeMillis() )
-	static final MAX_PROGRAM_SIZE = 10
 
-	def populationSize = 20
-
-	List<Program> evolve( LinearGP gp ) {
-		def population = randomPopulation( gp )
-		rank( population, gp.expected )
+	static List<Program> evolve( LinearGP gp, generations = 5 ) {
+		final initialPopulation = randomPopulation( gp )
+		rank( ( 1..generations ).inject( initialPopulation ) {
+			parents, _ -> offspring( parents, gp ) }, gp.expected )
 	}
 
-	List<Program> rank( List<Program> programs, expected ) {
+	static List<Program> offspring( List<Program> parents, LinearGP gp ) {
+		parents.collectMany { p ->
+			crossOver new Program( mutate( p.code, gp ) )
+		}
+	}
+
+	static List<Instr> mutate( List<Instr> code, LinearGP gp ) {
+		def r = rand.nextFloat()
+		code.collect {
+			r < 0.1f ? randomInstr( gp ) :
+				r < 0.15f ? [ ] : it
+		}.flatten()
+	}
+
+	static List<Program> crossOver( Program p ) {
+		//TODO implement this
+		[ p ]
+	}
+
+	static List<Program> rank( List<Program> programs, expected ) {
 		programs.sort { p1, p2 ->
 			def p1Val = p1.eval()
 			def p2Val = p2.eval()
 			if ( !p1Val ) return p2Val ? 1 : 0
 			if ( !p2Val ) return p1Val ? -1 : 0
 			def v1 = Math.abs( expected - p1Val )
-			def v2 = Math.abs( expected - p2.eval() )
+			def v2 = Math.abs( expected - p2Val )
 			v1 > v2 ? 1 : v1 < v2 ? -1 : p1.code.size() - p2.code.size()
 		}
 	}
 
-	List<Program> randomPopulation( LinearGP gp ) {
-		( 1..populationSize ).collect {
+	static List<Program> randomPopulation( LinearGP gp ) {
+		( 1..gp.populationSize ).collect {
 			new Program( code:
-					( 1..( 1 + rand.nextInt( MAX_PROGRAM_SIZE ) ) ).collect {
+					( 1..( 1 + rand.nextInt( gp.maxProgramSize ) ) ).collect {
 						randomInstr gp
 					} )
 		}
 	}
 
-	Instr randomInstr( LinearGP gp ) {
+	static Instr randomInstr( LinearGP gp ) {
 		def functs = rand.nextFloat() < 0.4f ? Instr.F0_NAMES : Instr.F1_NAMES
 		def name = functs[ rand.nextInt( functs.size() ) ]
 		def params = ( functs == Instr.F0_NAMES || gp.args.size() == 0 ) ?
@@ -104,10 +119,11 @@ class Instr {
 	List params
 
 	@Override
-	String toString( ) { name + ( params ? "($params)" : "" ) }
+	String toString( ) { name + ( params ? "(${params.toString()[ 1..-2 ]})" : "" ) }
 
 }
 
+@Immutable
 class Program {
 
 	List<Instr> code
