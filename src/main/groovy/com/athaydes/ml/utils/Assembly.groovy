@@ -6,25 +6,25 @@ package com.athaydes.ml.utils
  */
 class Assembly {
 
-	private static final acc = [ ] as Stack
+	private final acc = [ ] as Stack
 
-	static void ld( val ) {
+	void ld( val ) {
 		acc << val
 	}
 
-	static void add( ) {
+	void add( ) {
 		if ( acc.size() > 1 ) acc << acc.pop() + acc.pop()
 	}
 
-	static void sub( ) {
+	void sub( ) {
 		if ( acc.size() > 1 ) acc << acc.pop() - acc.pop()
 	}
 
-	static void clr( ) {
+	void clr( ) {
 		acc.clear()
 	}
 
-	static out( ) {
+	def out( ) {
 		if ( !acc.isEmpty() ) acc.pop()
 	}
 

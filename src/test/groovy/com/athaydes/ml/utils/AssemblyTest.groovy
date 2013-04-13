@@ -2,13 +2,19 @@ package com.athaydes.ml.utils
 
 import org.junit.Test
 
-import static com.athaydes.ml.utils.Assembly.*
-
 /**
  *
  * User: Renato
  */
 class AssemblyTest {
+
+	def machine = new Assembly()
+	def out = machine.&out
+	def ld = machine.&ld
+	def add = machine.&add
+	def sub = machine.&sub
+	def clr = machine.&clr
+
 
 	@Test
 	void testLd( ) {

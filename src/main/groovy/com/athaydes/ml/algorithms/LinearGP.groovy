@@ -1,6 +1,7 @@
 package com.athaydes.ml.algorithms
 
 import com.athaydes.ml.utils.Assembly
+import com.athaydes.ml.utils.ProgramFactory
 import groovy.transform.Immutable
 
 /**
@@ -9,23 +10,27 @@ import groovy.transform.Immutable
  */
 class LinearGP {
 
-	Object[] args
-	def expected
 	def populationSize = 20
+	def generations = 25
+	def keepOverNextGen = 5
 	def maxProgramSize = 10
+	def mutationP = 0.1f
+	def f0P = 0.4f
 	final List<Program> programs = [ ]
+	final List<Specification> specifications = [ ]
+	final ProgramFactory pFactory = new ProgramFactory( simplifyCode: true )
 
-	def withInputs( Object... args ) {
-		this.args = args
-		return this
+	void setMutationP( float p ) {
+		if ( p < 0f || p > 1f )
+			throw new IllegalArgumentException( "P must be between 0.0 and 1.0" )
+		this.mutationP = p
 	}
 
-	def resultIs( expected ) {
-		this.expected = expected
-		return this
+	SpecificationBuilder withInputs( Object... inputs ) {
+		new SpecificationBuilder( inputs: inputs )
 	}
 
-	def code( ) {
+	List<Instr> code( ) {
 		init()
 		programs[ 0 ].code
 	}
@@ -42,71 +47,114 @@ class LinearGP {
 
 	private void init( ) {
 		if ( !programs ) {
-			programs.addAll GPAlgorithm.evolve( this )
+			programs.addAll GPAlgorithm.instance.evolve( this )
 		}
 		programs
 	}
 
+	class SpecificationBuilder {
+
+		Object[] inputs
+
+		LinearGP resultIs( expected ) {
+			specifications << new Specification( inputs: inputs, out: [ expected ] )
+			return LinearGP.this
+		}
+
+	}
+
 }
 
+@Singleton
 class GPAlgorithm {
 
 	static final Random rand = new Random( System.currentTimeMillis() )
 
-	static List<Program> evolve( LinearGP gp, generations = 5 ) {
+	List<Program> evolve( LinearGP gp ) {
 		final initialPopulation = randomPopulation( gp )
-		rank( ( 1..generations ).inject( initialPopulation ) {
-			parents, _ -> offspring( parents, gp ) }, gp.expected )
-	}
-
-	static List<Program> offspring( List<Program> parents, LinearGP gp ) {
-		parents.collectMany { p ->
-			crossOver new Program( mutate( p.code, gp ) )
+		( 1..gp.generations ).inject( initialPopulation ) {
+			parents, _ ->
+				rank( parents[ 0..( gp.keepOverNextGen - 1 ) ] +
+						offspring( parents, gp ) )[ 0..( gp.populationSize - 1 ) ]
 		}
 	}
 
-	static List<Instr> mutate( List<Instr> code, LinearGP gp ) {
-		def r = rand.nextFloat()
+	List<Program> offspring( List<Program> parents, LinearGP gp ) {
+		match( parents ).collectMany { List<Program> couple ->
+			copulate( couple[ 0 ], couple[ 1 ], gp.pFactory ).collect { Program child ->
+				gp.pFactory.create( mutate( gp.mutationP, gp.f0P, child.code,
+						couple.first().specification.inputs ),
+						couple.first().specification )
+			}
+		}
+	}
+
+	List<Program> match( List<Program> parents ) {
+		if ( parents.size() < 2 ) return [ ]
+		( 1..<parents.size() ).collect { int i ->
+			def M = parents[ i - 1 ]
+			def F = parents[ i ]
+			( i % 2 && M.specification.is( F.specification ) ) ? [ M, F ] : null
+		} - null
+	}
+
+	List<Instr> mutate( float mutationP, float f0P, List<Instr> code, Object[] inputs ) {
 		code.collect {
-			r < 0.1f ? randomInstr( gp ) :
-				r < 0.15f ? [ ] : it
+			def r = rand.nextFloat()
+			def changeP = mutationP * 0.8f
+			r < changeP ? randomInstr( f0P, inputs ) :
+				r < mutationP ? [ ] : it
 		}.flatten()
 	}
 
-	static List<Program> crossOver( Program p ) {
-		//TODO implement this
-		[ p ]
+	List<Program> copulate( Program p1, Program p2, ProgramFactory pFactory ) {
+		[
+				pFactory.create( crossOver( p1.code, p2.code ), p1.specification ),
+				pFactory.create( crossOver( p2.code, p1.code ), p2.specification )
+		]
 	}
 
-	static List<Program> rank( List<Program> programs, expected ) {
+	List<Instr> crossOver( List<Instr> c1, List<Instr> c2 ) {
+		c1.take( c1.size().intdiv( 2 ) ) + c2.drop( c2.size().intdiv( 2 ) )
+	}
+
+	List<Program> rank( List<Program> programs ) {
 		programs.sort { p1, p2 ->
 			def p1Val = p1.eval()
 			def p2Val = p2.eval()
 			if ( !p1Val ) return p2Val ? 1 : 0
 			if ( !p2Val ) return p1Val ? -1 : 0
-			def v1 = Math.abs( expected - p1Val )
-			def v2 = Math.abs( expected - p2Val )
+			def v1 = Math.abs( p1.specification.out.first() - p1Val )
+			def v2 = Math.abs( p2.specification.out.first() - p2Val )
 			v1 > v2 ? 1 : v1 < v2 ? -1 : p1.code.size() - p2.code.size()
 		}
 	}
 
-	static List<Program> randomPopulation( LinearGP gp ) {
-		( 1..gp.populationSize ).collect {
-			new Program( code:
-					( 1..( 1 + rand.nextInt( gp.maxProgramSize ) ) ).collect {
-						randomInstr gp
-					} )
-		}
+	List<Program> randomPopulation( LinearGP gp ) {
+		gp.specifications.collect { sp ->
+			( 1..gp.populationSize ).collect {
+				gp.pFactory.create(
+						( 1..( 1 + rand.nextInt( gp.maxProgramSize ) ) ).collect {
+							randomInstr gp.f0P, sp.inputs
+						}, sp )
+			}
+		}.flatten()
 	}
 
-	static Instr randomInstr( LinearGP gp ) {
-		def functs = rand.nextFloat() < 0.4f ? Instr.F0_NAMES : Instr.F1_NAMES
-		def name = functs[ rand.nextInt( functs.size() ) ]
-		def params = ( functs == Instr.F0_NAMES || gp.args.size() == 0 ) ?
-			[ ] : gp.args[ [ rand.nextInt( gp.args.size() ) ] ]
+	Instr randomInstr( float f0P, Object[] inputs ) {
+		def functNames = ( !inputs || rand.nextFloat() < f0P ) ? Instr.F0_NAMES : Instr.F1_NAMES
+		def name = functNames[ rand.nextInt( functNames.size() ) ]
+		def params = ( functNames.is( Instr.F0_NAMES ) || inputs.size() == 0 ) ?
+			[ ] : inputs[ [ rand.nextInt( inputs.size() ) ] ]
 		new Instr( name: name, params: params )
 	}
 
+}
+
+@Immutable
+class Specification {
+	Object[] inputs
+	Object[] out
 }
 
 @Immutable
@@ -126,18 +174,19 @@ class Instr {
 @Immutable
 class Program {
 
+	Specification specification
 	List<Instr> code
 	private isEval = false
 	private res
 
 	def eval( ) {
 		if ( isEval ) return res
-		Assembly.clr()
+		def machine = new Assembly()
 		code.each { Instr instr ->
-			Assembly."$instr.name"( * instr.params )
+			machine."$instr.name"( * instr.params )
 		}
 		isEval = true
-		res = Assembly.out()
+		res = machine.out()
 	}
 
 }
