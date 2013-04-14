@@ -21,7 +21,7 @@ class Coder {
 
 	List<Instr> simplify( List<Instr> code ) {
 		def stackCount = 0
-		List<Instr> res = code.collect { instr ->
+		( code.collect { instr ->
 			if ( instr.name in validInstrs ) {
 				def info = validInstrs[ instr.name ]
 				if ( stackCount >= info[ KeyType.OPERANDS ] ) {
@@ -31,8 +31,13 @@ class Coder {
 					return null
 				}
 			}
-		} - null
-		res
+		} - null ).dropWhile { instr ->
+			if ( stackCount > 0 ) {
+				def info = validInstrs[ instr.name ]
+				stackCount -= info[ KeyType.STACK_CHANGE ]
+			}
+			stackCount > 0
+		}
 	}
 
 	List<Instr> writeCode( Closure cls ) {

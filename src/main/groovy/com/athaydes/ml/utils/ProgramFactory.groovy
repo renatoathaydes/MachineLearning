@@ -10,9 +10,8 @@ import com.athaydes.ml.algorithms.Specification
  */
 class ProgramFactory {
 
-	boolean simplifyCode = true
-
-	Program create( List<Instr> instrs, Specification specification ) {
+	Program create( List<Instr> instrs, Specification specification,
+	                boolean simplifyCode = false ) {
 		new Program( specification: specification, code: simplifyCode ?
 			new Coder().simplify( instrs ) : instrs )
 	}

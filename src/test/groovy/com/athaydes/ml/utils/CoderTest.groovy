@@ -13,10 +13,30 @@ class CoderTest {
 
 	@Test
 	void testSimplify( ) {
+		// non-simplify-able examples
+		assert coder.simplify( coder.writeCode {} ) ==
+				coder.writeCode {}
+		assert coder.simplify( coder.writeCode { ld 'hi' } ) ==
+				coder.writeCode { ld 'hi' }
 		assert coder.simplify( coder.writeCode { ld 10; ld 20; add() } ) ==
 				coder.writeCode { ld 10; ld 20; add() }
+		assert coder.simplify( coder.writeCode { ld 10; ld 20; out(); ld 20; ld 20; add(); sub() } ) ==
+				coder.writeCode { ld 10; ld 20; out(); ld 20; ld 20; add(); sub() }
+
+		// simplify-able examples
+		assert coder.simplify( coder.writeCode { add() } ) ==
+				coder.writeCode {}
+		assert coder.simplify( coder.writeCode { add(); out(); sub() } ) ==
+				coder.writeCode {}
 		assert coder.simplify( coder.writeCode { ld 10; ld 20; add(); add() } ) ==
 				coder.writeCode { ld 10; ld 20; add() }
+		assert coder.simplify( coder.writeCode { out(); ld 10; out(); out(); ld 20; ld 20; add(); sub() } ) ==
+				coder.writeCode { ld 10; out(); ld 20; ld 20; add() }
+		assert coder.simplify( coder.writeCode { ld 10; ld 20 } ) ==
+				coder.writeCode { ld 20 }
+		assert coder.simplify( coder.writeCode { ld 10; ld 20; out(); add(); ld 30 } ) ==
+				coder.writeCode { ld 20; out(); ld 30 }
+
 	}
 
 	@Test
