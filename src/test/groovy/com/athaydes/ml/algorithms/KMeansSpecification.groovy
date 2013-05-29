@@ -24,13 +24,16 @@ class KmeansSpecification extends spock.lang.Specification {
 		given:
 		"$k clusters and samples $samples"
 		def algorithm = new KMeans( k )
+
+		when:
+		"all the samples are classified"
 		def simpleSamples = samples.collect { new SimpleSample( it ) }
 		algorithm.classifyAll simpleSamples
 
-		expect:
+		then:
 		"The cluster's means should be: $expectedMeans"
 		def means = algorithm.clusters.collect { it.mean }
-		assert means.sort() == expectedMeans
+		means.sort() == expectedMeans
 
 		where:
 		k | samples     | expectedMeans
