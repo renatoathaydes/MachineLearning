@@ -15,6 +15,7 @@ class KMeansGuiTest {
 	@Before
 	void setup( ) {
 		FXApp.startApp( new KMeansGUI() )
+		FXApp.scene // blocks until the Scene is available
 	}
 
 	@Test

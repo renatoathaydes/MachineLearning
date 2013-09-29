@@ -31,6 +31,7 @@ class KMeansGUI extends Application {
 		stage.title = "K-Means Visual Test"
 		stage.scene = new Scene( root, WIDTH, HEIGHT )
 		stage.show()
+		stage.toFront()
 	}
 
 	static void main( args ) {
