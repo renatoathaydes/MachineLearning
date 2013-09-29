@@ -20,18 +20,9 @@ class LinearGP {
 	final List<Program> programs = [ ]
 	final List<Specification> specifications = [ ]
 	def pFactory = new ProgramFactory()
+	Closure evaluator
 
-	Closure evaluator = { Program p1, Program p2 ->
-		def p1Val = p1.eval()
-		def p2Val = p2.eval()
-		if ( !p1Val ) return p2Val ? 1 : 0
-		if ( !p2Val ) return p1Val ? -1 : 0
-		def v1 = Math.abs( p1.specification.out.first() - p1Val )
-		def v2 = Math.abs( p2.specification.out.first() - p2Val )
-		v1 > v2 ? 1 : v1 < v2 ? -1 : p1.code.size() - p2.code.size()
-	}
-
-	Closure equivalenceChecker = { Program p1, Program p2 ->
+	Closure programEqChecker = { Program p1, Program p2 ->
 		p1.code.size() != p2.code.size() ? 1 :
 			p1.code.collect { it.name + it.params.toString() }.toString() <=>
 					p2.code.collect { it.name + it.params.toString() }.toString()
@@ -92,7 +83,7 @@ class GPAlgorithm {
 			parents, _ ->
 				ensureSize( ( parents[ 0..( gp.keepOverNextGen - 1 ) ] +
 						offspring( parents, gp ) )
-						.unique( gp.equivalenceChecker ).sort( gp.evaluator ), gp )
+						.unique( gp.programEqChecker ).sort( gp.evaluator ), gp )
 		}.collect { Program fittest ->
 			gp.pFactory.create( fittest.code, fittest.specification, true )
 		}.sort( gp.evaluator )

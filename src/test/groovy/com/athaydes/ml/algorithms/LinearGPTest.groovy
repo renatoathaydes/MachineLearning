@@ -1,5 +1,6 @@
 package com.athaydes.ml.algorithms
 
+import com.athaydes.ml.utils.Evaluators
 import com.athaydes.ml.utils.ProgramFactory
 import org.junit.Assert
 import org.junit.Before
@@ -13,64 +14,10 @@ class LinearGPTest {
 
 
 	static final callArgs = [ ]
+	final evaluators = new Evaluators()
 
 	@Before
 	void setup( ) { callArgs.clear() }
-
-	@Test
-	void testEvaluator( ) {
-		Specification sp = new Specification( inputs: [ 1, 2, 10 ], out: [ 0 ] )
-
-		Program p1 = new Program( specification: sp, code: [
-				new Instr( 'ld', [ 1 ] ),
-				new Instr( 'ld', [ 2 ] ),
-				new Instr( 'add', [ ] )
-		] )
-		Program p2 = new Program( specification: sp, code: [
-				new Instr( 'ld', [ 10 ] ),
-				new Instr( 'ld', [ 2 ] ),
-				new Instr( 'add', [ ] )
-		] )
-
-		LinearGP gp = new LinearGP()
-
-		assert [ p1, p2 ].sort( gp.evaluator ) == [ p1, p2 ]
-		assert [ p2, p1 ].sort( gp.evaluator ) == [ p1, p2 ]
-
-		sp = new Specification( inputs: [ 1, 2, 10 ], out: [ 10 ] )
-		p1 = new Program( specification: sp, code: p1.code )
-		p2 = new Program( specification: sp, code: p2.code )
-		assert [ p1, p2 ].sort( gp.evaluator ) == [ p2, p1 ]
-		assert [ p2, p1 ].sort( gp.evaluator ) == [ p2, p1 ]
-
-		sp = new Specification( inputs: [ 1, 2, 10 ], out: [ 3 ] )
-		p1 = new Program( specification: sp, code: p1.code )
-		p2 = new Program( specification: sp, code: p2.code )
-		assert [ p1, p2 ].sort( gp.evaluator ) == [ p1, p2 ]
-
-		sp = new Specification( inputs: [ 1, 2, 10 ], out: [ 12 ] )
-		p1 = new Program( specification: sp, code: p1.code )
-		p2 = new Program( specification: sp, code: p2.code )
-		assert [ p1, p2 ].sort( gp.evaluator ) == [ p2, p1 ]
-
-		Program p3 = new Program( specification: sp, code: [
-				new Instr( 'ld', [ 10 ] ),
-				new Instr( 'ld', [ 1 ] ),
-				new Instr( 'ld', [ 1 ] ),
-				new Instr( 'add', [ ] ),
-				new Instr( 'add', [ ] )
-		] )
-
-		// p2 and p3 get the same result but p2 is shorter so should be ranked higher
-		assert [ p2, p3 ].sort( gp.evaluator ) == [ p2, p3 ]
-		assert [ p3, p2 ].sort( gp.evaluator ) == [ p2, p3 ]
-
-		// p4 has no code, so it just returns null, so it should be ranked lowest
-		Program p4 = new Program( specification: sp, code: [ ] )
-		assert [ p1, p2, p3, p4 ].sort( gp.evaluator ).last() == p4
-		assert [ p4, p3, p2, p1 ].sort( gp.evaluator ).last() == p4
-
-	}
 
 	@Test
 	void testEquivalenceChecker( ) {
@@ -94,11 +41,11 @@ class LinearGPTest {
 		] )
 		Program p4 = new Program( specification: sp, code: [ ] )
 
-		assert [ p1, p2 ].unique( gp.equivalenceChecker ) == [ p1, p2 ]
-		assert [ p1, p4 ].unique( gp.equivalenceChecker ) == [ p1, p4 ]
-		assert [ p2, p3 ].unique( gp.equivalenceChecker ) == [ p2 ]
-		assert [ p1, p2, p3, p4 ].unique( gp.equivalenceChecker ) == [ p1, p2, p4 ]
-		assert [ ].unique( gp.equivalenceChecker ) == [ ]
+		assert [ p1, p2 ].unique( gp.programEqChecker ) == [ p1, p2 ]
+		assert [ p1, p4 ].unique( gp.programEqChecker ) == [ p1, p4 ]
+		assert [ p2, p3 ].unique( gp.programEqChecker ) == [ p2 ]
+		assert [ p1, p2, p3, p4 ].unique( gp.programEqChecker ) == [ p1, p2, p4 ]
+		assert [ ].unique( gp.programEqChecker ) == [ ]
 	}
 
 	@Test
@@ -314,7 +261,7 @@ class LinearGPTest {
 	@Test
 	void testRandomPopulation( ) {
 		LinearGP gp = new LinearGP( populationSize: 100,
-				maxProgramSize: 5, f0P: 0.3f )
+				maxProgramSize: 5, f0P: 0.3f, evaluator: evaluators.numberEvaluator )
 		gp.withInputs( 10, 20 ).resultIs( 1 ).withInputs( 30, 40 ).resultIs( 2 )
 
 		def population = [ ]
@@ -336,7 +283,8 @@ class LinearGPTest {
 
 	@Test
 	void testSimplePrograms( ) {
-		def gp = new LinearGP( populationSize: 28, generations: 10, mutationP: 0.25f )
+		def gp = new LinearGP( populationSize: 28, generations: 10,
+				mutationP: 0.25f, evaluator: evaluators.numberEvaluator )
 				.withInputs( 2, 3 ).resultIs( 5 )
 
 		assert gp.programs.size() == 28
@@ -345,19 +293,35 @@ class LinearGPTest {
 		assert gp.programs[ 0 ].eval() == 5
 		assert gp.programs[ 0 ].code.size() == 3
 
-		gp = new LinearGP( populationSize: 28, generations: 10, mutationP: 0.25f )
+		gp = new LinearGP( populationSize: 28, generations: 10,
+				mutationP: 0.25f, evaluator: evaluators.numberEvaluator )
 				.withInputs( 5, 5 ).resultIs( 10 )
 
 		assert gp.programs.size() == 28
 		assert gp.programs[ 0 ].eval() == 10
 		assert gp.programs[ 0 ].code.size() == 3
 
-		gp = new LinearGP( populationSize: 28, generations: 10, mutationP: 0.25f )
+		gp = new LinearGP( populationSize: 28, generations: 10,
+				mutationP: 0.25f, evaluator: evaluators.numberEvaluator )
 				.withInputs( 10, 11 ).resultIs( -1 )
 		gp.programs.each { println it.code }
 		assert gp.programs.size() == 28
 		assert gp.programs[ 0 ].eval() == -1
 		assert gp.programs[ 0 ].code.size() == 3
+
+	}
+
+	@Test
+	void testNonTrivialPrograms( ) {
+		def gp = new LinearGP( populationSize: 150, generations: 50,
+				mutationP: 0.5f, maxProgramSize: 100, evaluator: evaluators.stringEvaluator )
+				.withInputs( 'h', 'u', 'o', 'e', 's' ).resultIs( 'house' )
+
+		//assert gp.programs.size() == 28
+		gp.programs.each { println it.code + " : " + it.eval() }
+
+		//assert gp.programs[ 0 ].eval() == 5
+		//assert gp.programs[ 0 ].code.size() == 3
 
 	}
 
