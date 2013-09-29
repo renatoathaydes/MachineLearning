@@ -1,5 +1,7 @@
 package com.athaydes.ml.algorithms
 
+import com.athaydes.ml.algorithms.ClusterStore.Helper
+
 /**
  *
  * User: Renato
@@ -34,7 +36,7 @@ class KMeans {
 		return cluster
 	}
 
-	void classifyAll( Iterable<Sample> samples ) {
+	void classifyAll( Iterable<? extends Sample> samples ) {
 		samples.each { sample -> nearestCluster( sample.value ) << sample }
 		reclassifyAfterChanging()
 	}
@@ -60,9 +62,7 @@ class KMeans {
 			if ( needReclassify ) break;
 		}
 		if ( needReclassify ) {
-			if ( enableLog ) {
-				println( clusters )
-			}
+			if ( enableLog ) println( clusters )
 			reclassifyAfterChanging()
 		}
 	}

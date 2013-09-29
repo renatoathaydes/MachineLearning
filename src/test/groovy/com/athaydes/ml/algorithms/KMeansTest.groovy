@@ -1,6 +1,5 @@
 package com.athaydes.ml.algorithms
 
-import com.athaydes.ml.algorithms.KMeans.Cluster
 import org.junit.Test
 
 /**
@@ -10,84 +9,74 @@ import org.junit.Test
 class KMeansTest {
 
 	@Test
-	void clustersHaveDifferentIds( ) {
-		def clustersCount = 10000
-		KMeans algorithm = new KMeans( clustersCount )
+	void "clusters always have different IDs"( ) {
+		def clustersCount = 10_000
+		def algorithm = new KMeans( clustersCount )
 		def clusterIds = algorithm.clusters*.id as Set
 		assert clusterIds.size() == clustersCount
 	}
 
 	@Test
-	void firstSamplesClassifiedAsExactMatchOrEmptyCluster( ) {
-		KMeans algorithm = new KMeans( 3 )
+	void "first samples classified as exact match or empty cluster"( ) {
+		def algorithm = new KMeans( 3 )
 
-		SimpleSample sample1 = new SimpleSample( 2 )
-		Cluster c1 = algorithm.classify( sample1 )
-		Cluster c2 = algorithm.classify( sample1 )
+		def sample1 = new SimpleSample( 2 )
+		def c1 = algorithm.classify( sample1 )
+		def c2 = algorithm.classify( sample1 )
 		assert c1 == c2
 		assert c1.mean == 2
 
-		SimpleSample sample2 = new SimpleSample( 5 )
-		Cluster c3 = algorithm.classify( sample2 )
-		Cluster c4 = algorithm.classify( sample2 )
+		def sample2 = new SimpleSample( 5 )
+		def c3 = algorithm.classify( sample2 )
+		def c4 = algorithm.classify( sample2 )
 		assert c3 == c4
 		assert c1 != c3
 		assert c3.mean == 5
 
-		SimpleSample sample3 = new SimpleSample( 10 )
-		Cluster c5 = algorithm.classify( sample3 )
+		def sample3 = new SimpleSample( 10 )
+		def c5 = algorithm.classify( sample3 )
 		assert c5 != c1 && c5 != c3
 		assert c5.mean == 10
 	}
 
 	@Test
-	void testClassifyAll( ) {
-		KMeans oneByOneAlgorithm = new KMeans( 2 )
-		KMeans batchAlgorithm = new KMeans( 2 )
+	void "classifyAll should have the same result as classifying samples one by one"( ) {
+		def oneByOneAlgorithm = new KMeans( 4 )
+		def batchAlgorithm = new KMeans( 4 )
 
 		def rand = new Random()
 		def items = ( 50..100 ).collect { new SimpleSample( it * rand.nextInt( 10000 ) ) }
 		items.each { oneByOneAlgorithm.classify it }
 		batchAlgorithm.classifyAll items
 
-		def oneByOneValues = [ ]
-		oneByOneAlgorithm.clusters.each {
-			oneByOneValues << ( oneByOneAlgorithm.store.getSamples( it.id )*.value ).sort()
-		}
+		def oneByOneValues = oneByOneAlgorithm.clusters.collect {
+			( oneByOneAlgorithm.store.getSamples( it.id )*.value ).sort()
+		} as Set
 
-		def batchValues = [ ]
-		batchAlgorithm.clusters.each {
-			batchValues << ( batchAlgorithm.store.getSamples( it.id )*.value ).sort()
-		}
+		def batchValues = batchAlgorithm.clusters.collect {
+			( batchAlgorithm.store.getSamples( it.id )*.value ).sort()
+		} as Set
 
-		assert oneByOneValues.size() == 2
-		assert batchValues.size() == 2
+		assert oneByOneValues.size() == 4
+		assert batchValues.size() == 4
 
-		if ( oneByOneValues[ 0 ].size() == batchValues[ 0 ].size() ) {
-			assert oneByOneValues[ 0 ] == batchValues[ 0 ]
-			assert oneByOneValues[ 1 ] == batchValues[ 1 ]
-		} else {
-			assert oneByOneValues[ 0 ] == batchValues[ 1 ]
-			assert oneByOneValues[ 1 ] == batchValues[ 0 ]
-		}
-
-
+		assert oneByOneValues == batchValues
 	}
 
 	@Test
-	void samplesCanHaveAnyType( ) {
-		KMeans algorithm = new KMeans( 5 )
+	void "samples can have any type"( ) {
+		def algorithm = new KMeans( 5 )
 
-		SimpleSample sample1 = new SimpleSample( 2.5 )
-		Cluster c1 = algorithm.classify( sample1 )
-		SimpleSample sample2 = new SimpleSample( 2.6 )
-		Cluster c2 = algorithm.classify( sample2 )
-		SimpleSample sample3 = new SimpleSample( 2.7 )
-		Cluster c3 = algorithm.classify( sample3 )
-		SimpleSample sample4 = new SimpleSample( 2.8 )
-		Cluster c4 = algorithm.classify( sample4 )
-		SimpleSample sample5 = new SimpleSample( 2.9 )
-		Cluster c5 = algorithm.classify( sample5 )
+		def sample1 = new SimpleSample( 2.5 )
+		def c1 = algorithm.classify( sample1 )
+		def sample2 = new SimpleSample( 2.6 )
+		def c2 = algorithm.classify( sample2 )
+		def sample3 = new SimpleSample( 2.7 )
+		def c3 = algorithm.classify( sample3 )
+		def sample4 = new SimpleSample( 2.8 )
+		def c4 = algorithm.classify( sample4 )
+		def sample5 = new SimpleSample( 2.9 )
+		def c5 = algorithm.classify( sample5 )
 
 		assert [ c1, c2, c3, c4, c5 ].unique().size() == 5
 		assert c1.mean == 2.5
@@ -101,8 +90,8 @@ class KMeansTest {
 		assert c5.mean == 2.9
 		assert c5.sampleCount == 1
 
-		SimpleSample sample6 = new SimpleSample( 1000.0 )
-		Cluster c6 = algorithm.classify( sample6 )
+		def sample6 = new SimpleSample( 1000.0 )
+		def c6 = algorithm.classify( sample6 )
 
 		assert c6.sampleCount == 1
 		assert c6.mean == 1000.0
@@ -110,36 +99,36 @@ class KMeansTest {
 	}
 
 	@Test
-	void samplesGoOnNearestClusterWhenAllClustersHaveSamples( ) {
-		KMeans algorithm = new KMeans( 3 )
+	void "samples go on nearest cluster when all clusters have samples"( ) {
+		def algorithm = new KMeans( 3 )
 
-		SimpleSample sample1 = new SimpleSample( 2 )
-		Cluster c1 = algorithm.classify( sample1 )
-		SimpleSample sample2 = new SimpleSample( 5 )
-		Cluster c2 = algorithm.classify( sample2 )
-		SimpleSample sample3 = new SimpleSample( 10 )
-		Cluster c3 = algorithm.classify( sample3 )
+		def sample1 = new SimpleSample( 2 )
+		def c1 = algorithm.classify( sample1 )
+		def sample2 = new SimpleSample( 5 )
+		def c2 = algorithm.classify( sample2 )
+		def sample3 = new SimpleSample( 10 )
+		def c3 = algorithm.classify( sample3 )
 		assert c1 != c2 && c2 != c3 && c1 != c3
 
-		SimpleSample sample4 = new SimpleSample( 1 )
-		Cluster c4 = algorithm.classify( sample4 )
+		def sample4 = new SimpleSample( 1 )
+		def c4 = algorithm.classify( sample4 )
 		assert c4 == c1
 		assert c4.mean == 1.5
 
-		SimpleSample sample5 = new SimpleSample( 7 )
-		Cluster c5 = algorithm.classify( sample5 )
+		def sample5 = new SimpleSample( 7 )
+		def c5 = algorithm.classify( sample5 )
 		assert c5 == c2
 		assert c5.mean == 6
 
-		SimpleSample sample6 = new SimpleSample( 9 )
-		Cluster c6 = algorithm.classify( sample6 )
+		def sample6 = new SimpleSample( 9 )
+		def c6 = algorithm.classify( sample6 )
 		assert c6 == c3
 		assert c6.mean == 9.5
 	}
 
 	@Test
-	void clustersChangeWhenNeeded( ) {
-		KMeans algorithm = new KMeans( 2 )
+	void "clusters change when needed"( ) {
+		def algorithm = new KMeans( 2 )
 
 		( 1..10 ).each { algorithm.classify( new SimpleSample( it ) ) }
 		( 91..100 ).each { algorithm.classify( new SimpleSample( it ) ) }
@@ -152,10 +141,10 @@ class KMeansTest {
 	}
 
 	@Test
-	void clustersChangeWhenNeededRandomized( ) {
-		KMeans algorithm = new KMeans( 2 )
+	void "clusters change when needed - randomized"( ) {
+		def algorithm = new KMeans( 2 )
 
-		List sampleValues = ( ( 1..10 ) + ( 91..100 ) ) as List
+		def sampleValues = ( ( 1..10 ) + ( 91..100 ) ) as List
 		Collections.shuffle( sampleValues )
 
 		sampleValues.each { algorithm.classify( new SimpleSample( it ) ) }
@@ -169,7 +158,7 @@ class KMeansTest {
 	@Test
 	void performanceTest( ) {
 		def getSamples = { order ->
-			List sampleValues = ( ( 1..( 1 * order ) ) +
+			def sampleValues = ( ( 1..( 1 * order ) ) +
 					( ( 2 * order + 1 )..( 3 * order ) ) +
 					( ( 4 * order + 1 )..( 5 * order ) ) ) as List
 
@@ -202,7 +191,7 @@ class KMeansTest {
 
 	}
 
-	def runWithTimer( Closure cls ) {
+	static runWithTimer( Closure cls ) {
 		def startT = System.currentTimeMillis()
 		cls()
 		System.currentTimeMillis() - startT
