@@ -178,7 +178,7 @@ class KMeansPanel extends VBox {
 		def r = ( index * 30 ) % 255
 		def g = ( index * 40 ) % 255
 		def b = ( index * 50 ) % 255
-		def color = [ r, g, b ] as Color
+		def color =  Color.rgb( r, g, b )
 		if ( clusterColors.contains( color ) ) return someColor( ( index + 1 ) % 30 )
 		return color
 	}

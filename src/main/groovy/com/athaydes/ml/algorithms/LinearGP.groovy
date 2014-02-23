@@ -186,17 +186,13 @@ class Program {
 
 	Specification specification
 	List<Instr> code
-	private isEval = false
-	private res
 
 	def eval( ) {
-		if ( isEval ) return res
 		def machine = new Assembly()
 		code.each { Instr instr ->
 			machine."$instr.name"( * instr.params )
 		}
-		isEval = true
-		res = machine.out()
+		machine.out()
 	}
 
 }
