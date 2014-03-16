@@ -11,8 +11,13 @@ import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Parent
 import javafx.scene.Scene
-import javafx.scene.control.*
+import javafx.scene.control.ChoiceBox
+import javafx.scene.control.ColorPicker
+import javafx.scene.control.Label
+import javafx.scene.control.ToolBar
 import javafx.scene.input.MouseEvent
+import javafx.scene.layout.FlowPane
+import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
@@ -42,7 +47,7 @@ class KMeansGUI extends Application {
 
 class KMeansPanel extends VBox {
 	final Group kMeansCanvas
-	final MenuButton colorsMenuButton
+	final FlowPane colorsMenu
 	final ChoiceBox<Integer> clusterCountPicker
 	final Map<String, Integer> clusterIndexById = [ : ]
 	final List<Color> clusterColors = [ ]
@@ -51,21 +56,22 @@ class KMeansPanel extends VBox {
 
 	KMeans kMeans
 
-	static create( ) {
+	static create() {
 		def gui = new KMeansPanel()
 		gui.initBackground()
 		gui.initClusterPicker()
 		return gui
 	}
 
-	KMeansPanel( ) {
+	KMeansPanel() {
 		this.stylesheets.add 'com/athaydes/ml/gui/kmeans.css'
 		this.padding = new Insets( 25, 25, 10, 25 )
 		this.spacing = 10
 		this.alignment = Pos.CENTER
 
 		clusterCountPicker = new ChoiceBox( id: 'cluster-count-picker' )
-		colorsMenuButton = new MenuButton( text: 'Change cluster colors', id: 'colors-menu-button' )
+		def colorsLabel = new Label( 'Select cluster colors:' )
+		colorsMenu = new FlowPane( id: 'colors-menu-button' )
 		kMeansCanvas = new Group( id: 'k-means-canvas' )
 
 		children.setAll(
@@ -74,8 +80,9 @@ class KMeansPanel extends VBox {
 				new ToolBar(
 						text( 'Number of clusters:' ),
 						clusterCountPicker,
-						colorsMenuButton
+						colorsLabel
 				),
+				colorsMenu,
 				kMeansCanvas
 		)
 	}
@@ -86,7 +93,7 @@ class KMeansPanel extends VBox {
 		return res
 	}
 
-	private void initBackground( ) {
+	private void initBackground() {
 		Rectangle back = new Rectangle( CANVAS_WIDTH, CANVAS_HEIGHT, Paint.valueOf( "#C0C0C0" ) )
 		back.arcHeight = 25
 		back.arcWidth = 25
@@ -94,7 +101,7 @@ class KMeansPanel extends VBox {
 		kMeansCanvas.children.add( back )
 	}
 
-	private void initClusterPicker( ) {
+	private void initClusterPicker() {
 		clusterCountPicker.items.addAll( 2..20 )
 		clusterCountPicker.selectionModel.selectedItemProperty().addListener( [
 				changed: { observableValue, Integer oldVal, Integer newVal ->
@@ -108,11 +115,11 @@ class KMeansPanel extends VBox {
 		oldVal = oldVal ?: 0
 		if ( oldVal > newVal ) {
 			( oldVal - newVal ).times {
-				colorsMenuButton.items.remove( colorsMenuButton.items.size() - 1 )
+				colorsMenu.children.remove( colorsMenu.children.size() - 1 )
 			}
 		} else {
 			( oldVal..<newVal ).each { int index ->
-				colorsMenuButton.items.add( clusterColorPicker( index ) )
+				colorsMenu.children.add( clusterColorPicker( index ) )
 			}
 		}
 		buildKMeans( newVal )
@@ -141,8 +148,8 @@ class KMeansPanel extends VBox {
 
 	}
 
-	private MenuItem clusterColorPicker( int index ) {
-		ColorPicker picker = new ColorPicker( id: "cluster-color-picker-$index" )
+	private ColorPicker clusterColorPicker( int index ) {
+		def picker = new ColorPicker( id: "cluster-color-picker-$index" )
 		picker.onAction = [
 				handle: {
 					if ( clusterColors.contains( picker.value ) ) {
@@ -163,7 +170,7 @@ class KMeansPanel extends VBox {
 		] as EventHandler
 		picker.value = someColor( index )
 		clusterColors[ index ] = picker.value
-		return new MenuItem( "Cluster ${index + 1}", picker )
+		picker
 	}
 
 	void onClickCanvas( MouseEvent event ) {
@@ -178,7 +185,7 @@ class KMeansPanel extends VBox {
 		def r = ( index * 30 ) % 255
 		def g = ( index * 40 ) % 255
 		def b = ( index * 50 ) % 255
-		def color =  Color.rgb( r, g, b )
+		def color = Color.rgb( r, g, b )
 		if ( clusterColors.contains( color ) ) return someColor( ( index + 1 ) % 30 )
 		return color
 	}
@@ -189,13 +196,13 @@ class GuiSample extends Rectangle implements Sample {
 	static idCount = 0
 	BigDecimal value
 
-	GuiSample( ) {
+	GuiSample() {
 		this.id = "gui-sample-${idCount++}"
 	}
 
 	def setLocation( location ) {
 		this.x = location.x
 		this.y = location.y
-		value = x ** 2 + y ** 2
+		value = x**2 + y**2
 	}
 }
