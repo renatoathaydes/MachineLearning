@@ -3,6 +3,7 @@ package com.athaydes.ml.algorithms
 import com.athaydes.ml.utils.Assembly
 import com.athaydes.ml.utils.ProgramFactory
 import groovy.transform.Immutable
+import groovy.transform.Memoized
 
 /**
  *
@@ -10,13 +11,13 @@ import groovy.transform.Immutable
  */
 class LinearGP {
 
-	def populationSize = 20
-	def generations = 25
-	def keepOverNextGen = 5
-	def maxProgramSize = 10
+	int populationSize = 20
+	int generations = 25
+	int keepOverNextGen = 5
+	int maxProgramSize = 10
 	int simplifyCodeThresholdSize = 7
-	def mutationP = 0.1f
-	def f0P = 0.4f
+	float mutationP = 0.1f
+	float f0P = 0.4f
 	final List<Program> programs = [ ]
 	final List<Specification> specifications = [ ]
 	def pFactory = new ProgramFactory()
@@ -24,8 +25,8 @@ class LinearGP {
 
 	Closure programEqChecker = { Program p1, Program p2 ->
 		p1.code.size() != p2.code.size() ? 1 :
-			p1.code.collect { it.name + it.params.toString() }.toString() <=>
-					p2.code.collect { it.name + it.params.toString() }.toString()
+				p1.code.collect { it.name + it.params.toString() }.toString() <=>
+						p2.code.collect { it.name + it.params.toString() }.toString()
 	}
 
 	void setMutationP( float p ) {
@@ -38,22 +39,22 @@ class LinearGP {
 		new SpecificationBuilder( inputs: inputs )
 	}
 
-	List<Instr> code( ) {
+	List<Instr> code() {
 		init()
 		programs[ 0 ].code
 	}
 
-	def call( ) {
+	def call() {
 		init()
 		programs[ 0 ].eval()
 	}
 
-	List<Program> getPrograms( ) {
+	List<Program> getPrograms() {
 		init()
 		programs
 	}
 
-	private void init( ) {
+	private void init() {
 		if ( !programs ) {
 			programs.addAll GPAlgorithm.instance.evolve( this )
 		}
@@ -91,8 +92,8 @@ class GPAlgorithm {
 
 	List<Program> ensureSize( List<Program> population, LinearGP gp ) {
 		population.size() >= gp.populationSize ? population.subList( 0, gp.populationSize ) :
-			( population + randomPopulation( gp, gp.populationSize - population.size() ) )
-					.subList( 0, gp.populationSize )
+				( population + randomPopulation( gp, gp.populationSize - population.size() ) )
+						.subList( 0, gp.populationSize )
 	}
 
 	List<Program> offspring( List<Program> parents, LinearGP gp ) {
@@ -106,7 +107,7 @@ class GPAlgorithm {
 		}
 	}
 
-	List<Program> match( List<Program> parents ) {
+	List<List<Program>> match( List<Program> parents ) {
 		if ( parents.size() < 2 ) return [ ]
 		( 1..<parents.size() ).collect { int i ->
 			def M = parents[ i - 1 ]
@@ -118,11 +119,14 @@ class GPAlgorithm {
 	List<Instr> mutate( float mutationP, float f0P, List<Instr> code, Object[] inputs ) {
 		code.collect {
 			def r = rand.nextFloat()
-			def changeP = mutationP * 0.6f
-			def addInstr = mutationP * 0.8f
-			r < changeP ? randomInstr( f0P, inputs ) :
-				r < addInstr ? [ it, randomInstr( f0P, inputs ) ] :
-					r < mutationP ? [ ] : it
+			if ( r < mutationP ) {
+				def thirdChance = mutationP / 3.0f
+				if ( r < thirdChance ) return [ randomInstr( f0P, inputs ) ]
+				if ( r < thirdChance * 2.0f ) return [ it, randomInstr( f0P, inputs ) ]
+				else return [ ]
+			} else {
+				return it
+			}
 		}.flatten()
 	}
 
@@ -155,7 +159,7 @@ class GPAlgorithm {
 		def functNames = ( !inputs || rand.nextFloat() < f0P ) ? Instr.F0_NAMES : Instr.F1_NAMES
 		def name = functNames[ rand.nextInt( functNames.size() ) ]
 		def params = ( functNames.is( Instr.F0_NAMES ) || inputs.size() == 0 ) ?
-			[ ] : inputs[ [ rand.nextInt( inputs.size() ) ] ]
+				[ ] : inputs[ [ rand.nextInt( inputs.size() ) ] ]
 		new Instr( name: name, params: params )
 	}
 
@@ -177,7 +181,7 @@ class Instr {
 	List params
 
 	@Override
-	String toString( ) { name + ( params ? "(${params.toString()[ 1..-2 ]})" : "" ) }
+	String toString() { name + ( params ? "(${params.toString()[ 1..-2 ]})" : "" ) }
 
 }
 
@@ -187,7 +191,8 @@ class Program {
 	Specification specification
 	List<Instr> code
 
-	def eval( ) {
+	@Memoized
+	def eval() {
 		def machine = new Assembly()
 		code.each { Instr instr ->
 			machine."$instr.name"( * instr.params )
