@@ -15,7 +15,7 @@ class EvaluatorsTest extends spock.lang.Specification {
 	@Shared
 	def coder = new Coder()
 
-	def "Number evaluator can sort programs when Specification uses ints"( ) {
+	def "Number evaluator can sort programs when Specification uses ints"() {
 		given:
 		"A Specification with the given <inputs> and <out>"
 		def spec = new Specification( inputs: inputs, out: [ out ] )
@@ -56,7 +56,7 @@ class EvaluatorsTest extends spock.lang.Specification {
 
 	}
 
-	def "Number evaluator can sort programs when Specification uses doubles"( ) {
+	def "Number evaluator can sort programs when Specification uses doubles"() {
 		given:
 		"A Specification with the given <inputs> and <out>"
 		def spec = new Specification( inputs: inputs, out: [ out ] )
@@ -151,17 +151,20 @@ class EvaluatorsTest extends spock.lang.Specification {
 //		assert [ p4, p3, p2, p1 ].sort( evaluator ).last() == p4
 //	}
 
-	def "the stringDistance method can find the distance between Strings"( ) {
+	def "the stringDistance method can find the distance between Strings"() {
 		expect:
 		"The distance between <s1> and <s2> to be the <expected>"
-		evaluators.stringDistance( s1, s2 ) == 0
+		evaluators.stringDistance( s1, s2 ) == expected
 
 		where:
 		s1       | s2       | expected
 		''       | ''       | 0
 		'a'      | 'a'      | 0
 		'abcdef' | 'abcdef' | 0
-		//'a'      | 'z'      | 1
+		'a'      | 'z'      | 1
+		'a'      | 'az'     | 1
+		'hello'  | 'helo'   | 1
+		'hi'     | 'hello'  | 4
 
 	}
 
