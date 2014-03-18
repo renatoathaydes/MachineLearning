@@ -1,5 +1,6 @@
 package com.athaydes.ml.utils
 
+import com.athaydes.ml.algorithms.Instr
 import com.athaydes.ml.algorithms.Program
 import com.athaydes.ml.algorithms.Specification
 import spock.lang.Shared
@@ -96,60 +97,59 @@ class EvaluatorsTest extends spock.lang.Specification {
 				coder.writeCode { ld 1.0 } ]                               | [ 1.0 ]           | 0.0 | [ 1, 0 ]
 
 	}
-//
-//	@Test
-//	void testStringEvaluator( ) {
-//		Specification sp = new Specification( inputs: [ 'a', 'b', 'c' ], out: [ 'ba' ] )
-//
-//		Program p1 = new Program( specification: sp, code: [
-//				new Instr( 'ld', [ 'a' ] ),
-//				new Instr( 'ld', [ 'b' ] ),
-//				new Instr( 'add', [ ] )
-//		] )
-//		Program p2 = new Program( specification: sp, code: [
-//				new Instr( 'ld', [ 'a' ] ),
-//				new Instr( 'ld', [ 'c' ] ),
-//				new Instr( 'add', [ ] )
-//		] )
-//
-//		def evaluator = evaluators.stringEvaluator
-//
-//		assert [ p1, p2 ].sort( evaluator ) == [ p1, p2 ]
-//		assert [ p2, p1 ].sort( evaluator ) == [ p1, p2 ]
-//
-//		sp = new Specification( inputs: [ 'a', 'b', 'c' ], out: [ 'ab' ] )
-//		p1 = new Program( specification: sp, code: p1.code )
-//		p2 = new Program( specification: sp, code: p2.code )
-//		assert [ p1, p2 ].sort( evaluator ) == [ p2, p1 ]
-//		assert [ p2, p1 ].sort( evaluator ) == [ p2, p1 ]
-//
-//		sp = new Specification( inputs: [ 0.1, 0.2, 1.0 ], out: [ 0.3 ] )
-//		p1 = new Program( specification: sp, code: p1.code )
-//		p2 = new Program( specification: sp, code: p2.code )
-//		assert [ p1, p2 ].sort( evaluator ) == [ p1, p2 ]
-//
-//		sp = new Specification( inputs: [ 0.1, 0.2, 1.0 ], out: [ 1.2 ] )
-//		p1 = new Program( specification: sp, code: p1.code )
-//		p2 = new Program( specification: sp, code: p2.code )
-//		assert [ p1, p2 ].sort( evaluator ) == [ p2, p1 ]
-//
-//		Program p3 = new Program( specification: sp, code: [
-//				new Instr( 'ld', [ 1.0 ] ),
-//				new Instr( 'ld', [ 0.1 ] ),
-//				new Instr( 'ld', [ 0.1 ] ),
-//				new Instr( 'add', [ ] ),
-//				new Instr( 'add', [ ] )
-//		] )
-//
-//		// p2 and p3 get the same result but p2 is shorter so should be ranked higher
-//		assert [ p2, p3 ].sort( evaluator ) == [ p2, p3 ]
-//		assert [ p3, p2 ].sort( evaluator ) == [ p2, p3 ]
-//
-//		// p4 has no code, so it just returns null, so it should be ranked lowest
-//		Program p4 = new Program( specification: sp, code: [ ] )
-//		assert [ p1, p2, p3, p4 ].sort( evaluator ).last() == p4
-//		assert [ p4, p3, p2, p1 ].sort( evaluator ).last() == p4
-//	}
+
+	def "String Evaluator can rank programs"() {
+		given:
+		def sp = new Specification( inputs: [ 'a', 'b', 'c' ], out: [ 'ba' ] )
+
+		and:
+		def p1 = new Program( specification: sp, code: [
+				new Instr( 'ld', [ 'a' ] ),
+				new Instr( 'ld', [ 'b' ] ),
+				new Instr( 'add', [ ] )
+		] )
+		def p2 = new Program( specification: sp, code: [
+				new Instr( 'ld', [ 'a' ] ),
+				new Instr( 'ld', [ 'c' ] ),
+				new Instr( 'add', [ ] )
+		] )
+		def p3 = new Program( specification: sp, code: [ ] )
+
+		and:
+		def evaluator = evaluators.stringEvaluator
+
+		expect:
+		[ p1, p2, p3 ].sort( evaluator ) == [ p1, p2, p3 ]
+		[ p2, p1, p3 ].sort( evaluator ) == [ p1, p2, p3 ]
+		[ p3, p2, p1 ].sort( evaluator ) == [ p1, p2, p3 ]
+		[ p3, p1, p2 ].sort( evaluator ) == [ p1, p2, p3 ]
+
+	}
+
+	def "String Evaluator ranks shorter programs higher given the same result"() {
+		given:
+		def sp = new Specification( inputs: [ 'a', 'b', 'c' ], out: [ 'ba' ] )
+
+		and:
+		def p1 = new Program( specification: sp, code: [
+				new Instr( 'ld', [ 'a' ] ),
+				new Instr( 'ld', [ 'c' ] ),
+				new Instr( 'add', [ ] )
+		] )
+		def p2 = new Program( specification: sp, code: [
+				new Instr( 'ld', [ 'a' ] ),
+				new Instr( 'ld', [ 'a' ] ),
+				new Instr( 'ld', [ 'c' ] ),
+				new Instr( 'add', [ ] )
+		] )
+
+		and:
+		def evaluator = evaluators.stringEvaluator
+
+		expect:
+		[ p1, p2 ].sort( evaluator ) == [ p1, p2 ]
+		[ p2, p1 ].sort( evaluator ) == [ p1, p2 ]
+	}
 
 	def "the stringDistance method can find the distance between Strings"() {
 		expect:

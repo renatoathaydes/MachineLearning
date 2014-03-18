@@ -313,8 +313,8 @@ class LinearGPTest {
 
 	@Test
 	void testNonTrivialPrograms( ) {
-		def gp = new LinearGP( populationSize: 250, generations: 100,
-				mutationP: 0.15f, maxProgramSize: 100, evaluator: evaluators.stringEvaluator )
+		def gp = new LinearGP( populationSize: 100, generations: 100,
+				mutationP: 0.15f, maxProgramSize: 20, evaluator: evaluators.stringEvaluator )
 				.withInputs( 'h', 'u', 'o', 'e', 's' ).resultIs( 'house' )
 
 		//assert gp.programs.size() == 28

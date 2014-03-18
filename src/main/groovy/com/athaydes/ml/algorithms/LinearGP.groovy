@@ -91,9 +91,11 @@ class GPAlgorithm {
 	}
 
 	List<Program> ensureSize( List<Program> population, LinearGP gp ) {
-		population.size() >= gp.populationSize ? population.subList( 0, gp.populationSize ) :
+		def res = population.size() >= gp.populationSize ? population.subList( 0, gp.populationSize ) :
 				( population + randomPopulation( gp, gp.populationSize - population.size() ) )
 						.subList( 0, gp.populationSize )
+		//println "Population!! ${res*.code}"
+		res
 	}
 
 	List<Program> offspring( List<Program> parents, LinearGP gp ) {
@@ -117,7 +119,7 @@ class GPAlgorithm {
 	}
 
 	List<Instr> mutate( float mutationP, float f0P, List<Instr> code, Object[] inputs ) {
-		code.collect {
+		code.collectMany {
 			def r = rand.nextFloat()
 			if ( r < mutationP ) {
 				def thirdChance = mutationP / 3.0f
@@ -125,9 +127,9 @@ class GPAlgorithm {
 				if ( r < thirdChance * 2.0f ) return [ it, randomInstr( f0P, inputs ) ]
 				else return [ ]
 			} else {
-				return it
+				return [ it ]
 			}
-		}.flatten()
+		}
 	}
 
 	List<Program> copulate( Program p1, Program p2, ProgramFactory pFactory ) {
