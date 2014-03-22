@@ -17,10 +17,10 @@ class LinearGPTest {
 	final evaluators = new Evaluators()
 
 	@Before
-	void setup( ) { callArgs.clear() }
+	void setup() { callArgs.clear() }
 
 	@Test
-	void testEquivalenceChecker( ) {
+	void testEquivalenceChecker() {
 		LinearGP gp = new LinearGP()
 		Specification sp = new Specification( inputs: [ 1, 2 ], out: [ 0 ] )
 
@@ -49,7 +49,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testMatch( ) {
+	void testMatch() {
 		Specification sp1 = new Specification( inputs: [ ], out: [ ] )
 		Specification sp2 = new Specification( inputs: [ ], out: [ ] )
 		def p1 = new Program( code: [ ], specification: sp1 )
@@ -75,7 +75,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testMutate( ) {
+	void testMutate() {
 		def inputs = [ 1, 2 ] as Object[]
 		def code = ( 'a'..'f' ).collect { new Instr( name: it, params: [ ] ) }
 
@@ -83,7 +83,7 @@ class LinearGPTest {
 			def mutatedFNames = ( 1..100 ).collect {
 				GPAlgorithm.instance.mutate( 0.25f, 0.9f, code, inputs )*.name
 			}
-			assert callArgs.size() > 85
+			assert callArgs.size() >= 85
 			assert callArgs.every { it[ 0 ] == 0.9f }
 
 			def randomPs = mutatedFNames.collect { instrs ->
@@ -114,7 +114,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testRandomInstr( ) {
+	void testRandomInstr() {
 		def inputs = [ ] as Object[]
 		def instrs = ( 1..100 ).collect { GPAlgorithm.instance.randomInstr( 0.25f, inputs ) }
 
@@ -155,7 +155,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testCopulate( ) {
+	void testCopulate() {
 		Specification sp = new Specification( inputs: [ 1, 2 ], out: [ ] )
 		Program p1 = new Program( specification: sp, code: [
 				new Instr( 'ld', [ 1 ] )
@@ -176,7 +176,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testCrossOver( ) {
+	void testCrossOver() {
 		List<Instr> c1 = [
 				new Instr( 'ld', [ 'a' ] ),
 				new Instr( 'ld', [ 'b' ] ),
@@ -222,7 +222,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testOffspring( ) {
+	void testOffspring() {
 		/* This test depends on the GPAlgorithm.instance.match(..) method working */
 
 		Specification sp1 = new Specification( inputs: [ 1 ], out: [ ] )
@@ -259,7 +259,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testRandomPopulation( ) {
+	void testRandomPopulation() {
 		LinearGP gp = new LinearGP( populationSize: 100,
 				maxProgramSize: 5, f0P: 0.3f, evaluator: evaluators.numberEvaluator )
 		gp.withInputs( 10, 20 ).resultIs( 1 ).withInputs( 30, 40 ).resultIs( 2 )
@@ -282,7 +282,31 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testSimplePrograms( ) {
+	void testProbabilityEvolver() {
+		ProbabilityEvolver evolver = new ProbabilityEvolver()
+
+		// mock evaluator always says the previous program was better
+		def mockEvaluations = ( 0..10 ).iterator()
+		def mockEvaluator = { _ -> mockEvaluations.next() }
+
+		def gp = new LinearGP( mutationP: 0.5f, evaluator: mockEvaluator )
+		def mockProgram = [ new Program( null, [ ] ) ]
+
+		def result = evolver.evolveP( 'mutationP', gp, mockProgram, mockProgram )
+
+		assert result == mockProgram
+		Assert.assertEquals gp.mutationP, 0.5f + evolver.pChange.value, 0.001
+		assert evolver.pChange == ProbabilityEvolver.ProbabilityChange.DECREASE
+
+		result = evolver.evolveP( 'mutationP', gp, mockProgram, mockProgram )
+
+		assert result == mockProgram
+		Assert.assertEquals gp.mutationP, 0.5f, 0.001
+		assert evolver.pChange == ProbabilityEvolver.ProbabilityChange.INCREASE
+	}
+
+	@Test
+	void testSimplePrograms() {
 		def gp = new LinearGP( populationSize: 28, generations: 10,
 				mutationP: 0.25f, evaluator: evaluators.numberEvaluator )
 				.withInputs( 2, 3 ).resultIs( 5 )
@@ -312,7 +336,7 @@ class LinearGPTest {
 	}
 
 	@Test
-	void testNonTrivialPrograms( ) {
+	void testNonTrivialPrograms() {
 		def gp = new LinearGP( populationSize: 100, generations: 100,
 				mutationP: 0.15f, maxProgramSize: 20, evaluator: evaluators.stringEvaluator )
 				.withInputs( 'h', 'u', 'o', 'e', 's' ).resultIs( 'house' )

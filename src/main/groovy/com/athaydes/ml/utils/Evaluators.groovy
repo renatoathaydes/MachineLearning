@@ -13,14 +13,14 @@ class Evaluators {
 		def p1Val = p.eval()
 		if ( !p1Val ) return Integer.MAX_VALUE
 		def diff = Math.abs( p.specification.out.first() - p1Val )
-		p.code.size() + diff
+		p.code.size() + 1000 * diff
 	}
 
 	final Closure stringEvaluator = { Program p ->
 		String p1Val = p.eval()
 		if ( !p1Val ) return Integer.MAX_VALUE
 		def distance = stringDistance p.specification.out.first(), p1Val
-		p.code.size() + distance
+		p.code.size() + 1000 * distance
 	}
 
 	// see https://en.wikipedia.org/wiki/Levenshtein_distance

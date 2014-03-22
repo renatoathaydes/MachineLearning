@@ -39,7 +39,7 @@ class LinearGP {
 		new SpecificationBuilder( inputs: inputs )
 	}
 
-	List<Instr> code() {
+	List<Instr> getCode() {
 		init()
 		programs[ 0 ].code
 	}
@@ -78,24 +78,37 @@ class LinearGP {
 class GPAlgorithm {
 
 	static final Random rand = new Random( System.currentTimeMillis() )
+	def pEvolver = new ProbabilityEvolver()
+	final evolvingFields = ( [ 'mutationP' ] * 5 ) + ( [ 'f0P' ] * 5 )
+	int evolvingFieldIndex = 0
 
 	List<Program> evolve( LinearGP gp ) {
 		( 1..gp.generations ).inject( randomPopulation( gp ) ) {
-			parents, _ ->
-				ensureSize( ( parents[ 0..( gp.keepOverNextGen - 1 ) ] +
-						offspring( parents, gp ) )
-						.unique( gp.programEqChecker ).sort( gp.evaluator ), gp )
-		}.collect { Program fittest ->
-			gp.pFactory.create( fittest.code, fittest.specification, true )
+			parents, _ -> newGeneration( parents, gp )
+		}.collect { Program program ->
+			gp.pFactory.create( program.code, program.specification, true )
 		}.sort( gp.evaluator )
 	}
 
+	private List<Program> newGeneration( List<Program> parents, LinearGP gp ) {
+		def nextGen = ensureSize( ( parents[ 0..<gp.keepOverNextGen ] + offspring( parents, gp ) )
+				.unique( gp.programEqChecker ), gp )
+				.sort( gp.evaluator )
+		pEvolver.evolveP( nextEvolvingField(), gp, parents, nextGen )
+	}
+
+	String nextEvolvingField() {
+		if ( evolvingFields.empty ) return null
+		if ( evolvingFieldIndex < evolvingFields.size() )
+			return evolvingFields[ evolvingFieldIndex++ ]
+		evolvingFieldIndex = 0
+		nextEvolvingField()
+	}
+
 	List<Program> ensureSize( List<Program> population, LinearGP gp ) {
-		def res = population.size() >= gp.populationSize ? population.subList( 0, gp.populationSize ) :
-				( population + randomPopulation( gp, gp.populationSize - population.size() ) )
-						.subList( 0, gp.populationSize )
-		//println "Population!! ${res*.code}"
-		res
+		population.size() >= gp.populationSize ?
+				population.subList( 0, gp.populationSize ) :
+				population + randomPopulation( gp, gp.populationSize - population.size() )
 	}
 
 	List<Program> offspring( List<Program> parents, LinearGP gp ) {
@@ -167,6 +180,42 @@ class GPAlgorithm {
 
 }
 
+class ProbabilityEvolver {
+
+	enum ProbabilityChange {
+		INCREASE( 0.01f ), DECREASE( -0.01f )
+
+		final float value;
+
+		ProbabilityChange( float value ) {
+			this.value = value;
+		}
+
+		ProbabilityChange swap() {
+			if ( this == INCREASE ) DECREASE else INCREASE
+		}
+	}
+
+	def pChange = ProbabilityChange.INCREASE
+
+	List<Program> evolveP( String variable, LinearGP algorithm, List<Program> parents, List<Program> nextGen ) {
+		if ( !variable ) return nextGen
+		def scoreCalculator = { acc, p -> acc - algorithm.evaluator( p ) }
+		def parentsScore = parents.inject( 0, scoreCalculator )
+		def nextGenScore = nextGen.inject( 0, scoreCalculator )
+		if ( parentsScore > nextGenScore ) {
+			pChange = pChange.swap()
+		}
+		algorithm."$variable" = boundedP( algorithm."$variable", pChange.value )
+		nextGen
+	}
+
+	float boundedP( float p, float delta ) {
+		Math.min( Math.max( p + delta, 0f ), 1f )
+	}
+
+}
+
 @Immutable
 class Specification {
 	Object[] inputs
@@ -197,7 +246,7 @@ class Program {
 	def eval() {
 		def machine = new Assembly()
 		code.each { Instr instr ->
-			machine."$instr.name"( * instr.params )
+			machine."$instr.name"( *instr.params )
 		}
 		machine.out()
 	}
