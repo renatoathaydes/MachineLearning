@@ -12,7 +12,7 @@ class Coder {
 		OPERANDS, STACK_CHANGE
 	}
 	static final validInstrs = [
-			'ld': [ ( KeyType.OPERANDS ): 0, ( KeyType.STACK_CHANGE ): 1 ],
+			'ld' : [ ( KeyType.OPERANDS ): 0, ( KeyType.STACK_CHANGE ): 1 ],
 			'out': [ ( KeyType.OPERANDS ): 1, ( KeyType.STACK_CHANGE ): -1 ],
 			'add': [ ( KeyType.OPERANDS ): 2, ( KeyType.STACK_CHANGE ): -1 ],
 			'sub': [ ( KeyType.OPERANDS ): 2, ( KeyType.STACK_CHANGE ): -1 ],
@@ -52,6 +52,13 @@ class Coder {
 
 		def invokeMethod( String name, Object args ) {
 			code << new Instr( name, args as List )
+		}
+
+		def getProperty( String name ) {
+			if ( name in Instr.F0_NAMES ) {
+				code << new Instr( name, [ ] )
+				return null
+			} else metaClass.getMetaProperty( name ).getProperty( this )
 		}
 
 	}

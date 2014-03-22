@@ -12,7 +12,7 @@ class CoderTest {
 	final coder = new Coder()
 
 	@Test
-	void testSimplify( ) {
+	void testSimplify() {
 		// non-simplify-able examples
 		assert coder.simplify( coder.writeCode {} ) ==
 				coder.writeCode {}
@@ -40,7 +40,7 @@ class CoderTest {
 	}
 
 	@Test
-	void testWriteCode( ) {
+	void testWriteCode() {
 		List<Instr> code = coder.writeCode {
 			ld 10
 			ld 5
@@ -53,6 +53,18 @@ class CoderTest {
 		assert coder.writeCode { ( 'a'..'z' ).each { s -> "$s"() } } ==
 				( 'a'..'z' ).collect { new Instr( it, [ ] ) }
 
+	}
+
+	@Test
+	void testWriteCodeWithPropertyLikeAccess() {
+		List<Instr> code = coder.writeCode {
+			ld 10
+			ld 5
+			add
+			out
+		}
+		assert code == [ new Instr( 'ld', [ 10 ] ), new Instr( 'ld', [ 5 ] ),
+		                 new Instr( 'add', [ ] ), new Instr( 'out', [ ] ) ]
 	}
 
 }
