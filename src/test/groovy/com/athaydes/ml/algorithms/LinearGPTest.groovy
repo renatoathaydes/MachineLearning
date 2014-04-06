@@ -337,16 +337,12 @@ class LinearGPTest {
 
 	@Test
 	void testNonTrivialPrograms() {
-		def gp = new LinearGP( populationSize: 100, generations: 100,
+		def gp = new LinearGP( populationSize: 10, generations: 500,
 				mutationP: 0.15f, maxProgramSize: 20, evaluator: evaluators.stringEvaluator )
 				.withInputs( 'h', 'u', 'o', 'e', 's' ).resultIs( 'house' )
 
-		//assert gp.programs.size() == 28
-		gp.programs.each { println it.code + " : " + it.eval() }
-
-		//assert gp.programs[ 0 ].eval() == 5
-		//assert gp.programs[ 0 ].code.size() == 3
-
+        //println gp.programs*.eval(  )
+        assert gp.programs.first().eval() == 'house'
 	}
 
 }

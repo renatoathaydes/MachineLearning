@@ -179,9 +179,9 @@ class EvaluatorsTest extends spock.lang.Specification {
 		'a'      | 'a'      | 0
 		'abcdef' | 'abcdef' | 0
 		'a'      | 'z'      | 1
-		'a'      | 'az'     | 1
-		'hello'  | 'helo'   | 1
-		'hi'     | 'hello'  | 4
+		'a'      | 'az'     | 6
+		'hello'  | 'helo'   | 7
+		'hi'     | 'hello'  | 34
 
 	}
 
